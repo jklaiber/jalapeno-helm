@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.collectors.telegrafIngress.name }}"
+  labels:
+    app: "{{ .Values.collectors.telegrafIngress.name }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ .Values.collectors.telegrafIngress.name }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ .Values.collectors.telegrafIngress.name }}"
+    spec:
+      containers:
+        - name: telegraf
+          image: "{{ .Values.collectors.telegrafIngress.image }}"
+          volumeMounts:
+            - mountPath: /etc/telegraf/telegraf.conf
+              name: telegraf-ingress-config
+              subPath: telegraf.conf
+              readOnly: true
+          {{- if .Values.collectors.telegrafIngress.resources }}
+          resources:
+            {{- if .Values.collectors.telegrafIngress.resources.requests }}
+            requests:
+              memory: {{ .Values.collectors.telegrafIngress.resources.requests.memory | default "50Mi" | quote }}
+              cpu: {{ .Values.collectors.telegrafIngress.resources.requests.cpu | default "10m" | quote }}
+            {{- else}}
+            requests:
+              memory: "50Mi"
+              cpu: "10m"
+            {{- end}}
+            {{- if .Values.collectors.telegrafIngress.resources.limits }}
+            limits:
+              memory: {{ .Values.collectors.telegrafIngress.resources.limits.memory | default "1024Mi" | quote }}
+              cpu: {{ .Values.collectors.telegrafIngress.resources.limits.cpu | default "1" | quote }}
+            {{- else}}
+            limits:
+              memory: "1024Mi"
+              cpu: "1"
+            {{- end }}
+          {{- else }}
+          resources:
+            requests:
+              memory: "50Mi"
+              cpu: "10m"
+            limits:
+              memory: "1024Mi"
+              cpu: "1"
+          {{- end }}
+      imagePullSecrets:
+        - name: "{{ .Values.collectors.telegrafIngress.imagePullSecret }}"
+      volumes:
+        - name: telegraf-ingress-config
+          configMap:
+            name: "{{ .Values.collectors.telegrafIngress.name }}-config"

@@ -1,0 +1,12 @@
+apiVersion: "database.arangodb.com/v1alpha"
+kind: "ArangoDeployment"
+metadata:
+  name: {{ .Values.arangodb.name }}
+spec:
+  mode: Single
+  image: {{ .Values.arangodb.image }}
+  tls:
+    caSecretName: None
+  externalAccess:
+    type: {{ .Values.arangodb.service.type }}
+    {{ if eq .Values.arangodb.service.type "NodePort" }}nodePort: {{ .Values.arangodb.service.port }}{{ end }}

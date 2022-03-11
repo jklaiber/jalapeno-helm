@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.processors.lslinknodeEdge.name }}"
+spec:
+  replicas: {{ .Values.processors.lslinknodeEdge.replicas }}
+  selector:
+    matchLabels:
+      app: "{{ .Values.processors.lslinknodeEdge.name }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ .Values.processors.lslinknodeEdge.name }}"
+    spec:
+      volumes:
+        - name: credentials
+          secret:
+            secretName: {{ .Values.processors.lslinknodeEdge.name }}-secret
+      containers:
+        - image: "{{ .Values.processors.lslinknodeEdge.image }}"
+          imagePullPolicy: Always
+          name: lslinknode-edge
+          volumeMounts:
+            - name: credentials
+              mountPath: /credentials
+          # TODO: arangodb name 
+          args:
+            - --v
+            - "5"
+            - --message-server
+            - "{{ .Values.kafka.fullnameOverride }}.{{ .Release.Namespace }}:9092"
+            - --database-server
+            - "http://arangodb.{{ .Release.Namespace }}:8529"
+            - --database-name
+            - "{{ .Values.arangodb.databaseName }}"
+          {{- if .Values.collectors.gobmp.resources }}
+          resources:
+            {{- if .Values.collectors.gobmp.resources.requests }}
+            requests:
+              memory: {{ .Values.collectors.gobmp.resources.requests.memory | default "50Mi" | quote }}
+              cpu: {{ .Values.collectors.gobmp.resources.requests.cpu | default "10m" | quote }}
+            {{- else}}
+            requests:
+              memory: "50Mi"
+              cpu: "10m"
+            {{- end}}
+            {{- if .Values.collectors.gobmp.resources.limits }}
+            limits:
+              memory: {{ .Values.collectors.gobmp.resources.limits.memory | default "1024Mi" | quote }}
+              cpu: {{ .Values.collectors.gobmp.resources.limits.cpu | default "1" | quote }}
+            {{- else}}
+            limits:
+              memory: "1024Mi"
+              cpu: "1"
+            {{- end }}
+          {{- else }}
+          resources:
+            requests:
+              memory: "50Mi"
+              cpu: "10m"
+            limits:
+              memory: "1024Mi"
+              cpu: "1"
+          {{- end }}
+
+

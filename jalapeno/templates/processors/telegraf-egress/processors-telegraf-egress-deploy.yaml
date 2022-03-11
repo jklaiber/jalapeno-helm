@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.processors.telegrafEgress.name }}"
+  labels:
+    app: "{{ .Values.processors.telegrafEgress.name }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ .Values.processors.telegrafEgress.name }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ .Values.processors.telegrafEgress.name }}"
+    spec:
+      containers:
+        - name: telegraf
+          image: "{{ .Values.processors.telegrafEgress.image }}"
+          volumeMounts:
+            - mountPath: /etc/telegraf/telegraf.conf
+              name: telegraf-egress-config
+              subPath: telegraf.conf
+              readOnly: true
+          {{- if .Values.collectors.gobmp.resources }}
+          resources:
+            {{- if .Values.collectors.gobmp.resources.requests }}
+            requests:
+              memory: {{ .Values.collectors.gobmp.resources.requests.memory | default "50Mi" | quote }}
+              cpu: {{ .Values.collectors.gobmp.resources.requests.cpu | default "10m" | quote }}
+            {{- else}}
+            requests:
+              memory: "50Mi"
+              cpu: "10m"
+            {{- end}}
+            {{- if .Values.collectors.gobmp.resources.limits }}
+            limits:
+              memory: {{ .Values.collectors.gobmp.resources.limits.memory | default "1024Mi" | quote }}
+              cpu: {{ .Values.collectors.gobmp.resources.limits.cpu | default "1" | quote }}
+            {{- else}}
+            limits:
+              memory: "1024Mi"
+              cpu: "1"
+            {{- end }}
+          {{- else }}
+          resources:
+            requests:
+              memory: "50Mi"
+              cpu: "10m"
+            limits:
+              memory: "1024Mi"
+              cpu: "1"
+          {{- end }}
+      imagePullSecrets:
+        - name: "{{ .Values.processors.telegrafEgress.imagePullSecret }}"
+      volumes:
+        - name: telegraf-egress-config
+          configMap:
+            name: "{{ .Values.processors.telegrafEgress.name }}-config"

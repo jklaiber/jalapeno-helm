@@ -1,0 +1,144 @@
+# Self maintained charts /template
+ingressSecretName: ingress-certificate-secret-prod
+
+collectors:
+  gobmp:
+    name: gobmp
+    replicas: 1
+    image: docker.io/sbezverk/gobmp:latest
+    nodePorts:
+      incomingBMPSessions: 30511
+      performanceMonitoring: 30767
+    resources:
+      requests:
+        memory: 50Mi
+        cpu: 10m
+      limits:
+        memory: 1024Mi
+        cpu: 1
+  telegrafIngress:
+    name: telegraf-ingress
+    replicas: 1
+    image: telegraf:1.15-alpine
+    imagePullSecret: regcred
+    nodePort: 32400
+    # resources:
+    #   requests:
+    #     memory:
+    #     cpu:
+    #   limits:
+    #     memory:
+    #     cpu:
+
+processors:
+  lslinknodeEdge:
+    name: lslinknode-edge
+    replicas: 1
+    image: docker.io/iejalapeno/lslinknode-edge:latest
+    # resources:
+    #   requests:
+    #     memory:
+    #     cpu:
+    #   limits:
+    #     memory:
+    #     cpu:
+  telegrafEgress:
+    name: telegraf-egress
+    replicas: 1
+    image: telegraf:1.15-alpine
+    imagePullSecret: regcred
+    # resources:
+    #   requests:
+    #     memory:
+    #     cpu:
+    #   limits:
+    #     memory:
+    #     cpu:
+  topology:
+    name: topology
+    replicas: 1
+    image: docker.io/iejalapeno/topology:latest
+    # resources:
+    #   requests:
+    #     memory:
+    #     cpu:
+    #   limits:
+    #     memory:
+    #     cpu:
+
+arangodb:
+  name: arangodb
+  image: arangodb/arangodb:3.7.10
+  service:
+    type: NodePort
+    port: 30852
+  ingress:
+    domain: arangodb.dev.network.garden
+  databaseName: jalapeno
+  databaseUser: root
+  databasePassword: jalapeno
+
+# Official bitnami/stable charts
+# The charts are defined in the Charts.yaml as dependency
+
+# https://github.com/bitnami/charts/tree/master/bitnami/influxdb
+influxdb:
+  fullnameOverride: influxdb
+  image:
+    repository: bitnami/influxdb
+    tag: 2.0.7-debian-10-r34
+  auth:
+    admin:
+      username: admin
+      password: gsplabgsplab
+  influxdb:
+    extraEnvVars:
+      # Don't change the ordering!
+      - name: INFLUXDB_DB
+        value: "mdt_db"
+      - name: INFLUXDB_USER
+        value: jalapeno
+      - name: INFLUXDB_USER_PASSWORD
+        value: jalapeno
+    replicaCount: 1
+    service:
+      type: NodePort
+      nodePorts:
+        http: 30308
+
+# https://github.com/bitnami/charts/tree/master/bitnami/grafana
+grafana:
+  fullnameOverride: grafana
+  image:
+    repository: bitnami/grafana
+    tag: 8.0.6-debian-10-r0
+  admin:
+    user: root
+    password: jalapeno
+  replicaCount: 1
+  service:
+    type: NodePort
+    nodePort: 30300
+  ingress:
+    enabled: true
+    hostname: grafana.dev.network.garden
+    tls:
+      - hosts:
+        - grafana.dev.network.garden
+        secretName: ingress-certificate-secret-prod
+
+# https://github.com/bitnami/charts/tree/master/bitnami/kafka
+kafka:
+  fullnameOverride: kafka
+  image:
+    repository: bitnami/kafka
+    tag: 2.8.0-debian-10-r57
+  replicacount: 1
+  # service:
+  #   type: NodePort
+  # externalAccess:
+  #   enabled: true
+  #   service:
+  #     type: NodePort
+  #     nodePorts:
+  #       - 30092

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+spec:
+  ports:
+   - name: incbmpsess
+     nodePort: {{ .Values.collectors.gobmp.nodePorts.incomingBMPSessions }}
+     port: 5000
+     protocol: TCP
+     targetPort: 5000
+   - name: perfmon
+     nodePort: {{ .Values.collectors.gobmp.nodePorts.performanceMonitoring }}
+     port: 56767
+     protocol: TCP
+     targetPort: 56767
+  selector:
+    app: "{{ .Values.collectors.gobmp.name }}"
+  type: NodePort
+metadata:
+  name: "{{ .Values.collectors.gobmp.name }}"
