@@ -18,6 +18,7 @@ password: ""
 ```
 
 ## Prerequisites
+You need to install the arangodb operator first. This is the new official recommended way to deploy arango databases on a Kubernetes cluster. 
 ```
 export URLPREFIX=https://github.com/arangodb/kube-arangodb/releases/download/1.2.8
 helm install arangodb-crd $URLPREFIX/kube-arangodb-crd-1.2.8.tgz
